@@ -1,1 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>Mideg Dugarova — Technical Product Marketing</title>
+
+  <meta
+    name="description"
+    content="Technical product marketing for developer tools and AI infrastructure."
+  >
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: #fafafa;
+      color: #171717;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+
+    main {
+      width: min(880px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 110px 0 85px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .eyebrow,
+    .label {
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #666;
+      font-weight: 600;
+    }
+
+    h1 {
+      max-width: 850px;
+      margin: 14px 0 28px;
+      font-size: clamp(3rem, 7vw, 5.8rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+      font-weight: 650;
+    }
+
+    h2 {
+      margin: 0 0 42px;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    h3 {
+      margin: 8px 0 16px;
+      max-width: 700px;
+      font-size: 1.55rem;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      max-width: 720px;
+    }
+
+    .intro {
+      font-size: 1.22rem;
+      max-width: 740px;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 22px;
+      margin-top: 34px;
+    }
+
+    a {
+      color: inherit;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 4px;
+    }
+
+    section {
+      padding: 75px 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .project {
+      padding: 34px 0;
+      max-width: 760px;
+    }
+
+    .project:first-of-type {
+      padding-top: 0;
+    }
+
+    .project + .project {
+      border-top: 1px solid #e2e2e2;
+    }
+
+    .project-link {
+      display: inline-block;
+      margin-top: 10px;
+      font-weight: 600;
+    }
+
+    .impact-item {
+      padding: 24px 0;
+      max-width: 720px;
+    }
+
+    .impact-item + .impact-item {
+      border-top: 1px solid #e2e2e2;
+    }
+
+    .impact-number {
+      display: inline-block;
+      min-width: 90px;
+      font-size: 1.5rem;
+      font-weight: 650;
+    }
+
+    .about p {
+      font-size: 1.08rem;
+    }
+
+    footer {
+      padding: 55px 0 80px;
+      color: #555;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 70px 0 55px;
+      }
+
+      section {
+        padding: 55px 0;
+      }
+
+      .intro {
+        font-size: 1.08rem;
+      }
+
+      .impact-number {
+        display: block;
+        margin-bottom: 4px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main>
+
+  <!-- HERO -->
+
+  <header>
+    <p class="eyebrow">
+      Technical Product Marketing · Developer Tools · AI Infrastructure
+    </p>
+
+    <h1>
+      I look for the boundary condition that makes a technical product matter.
+    </h1>
+
+    <p class="intro">
+      Features rarely explain why one developer adopts a product and another
+      doesn't. I usually start one layer lower: what changes the decision,
+      where the workflow breaks, which assumption stops being true, and what
+      the product actually lets someone do.
+    </p>
+
+    <p class="intro">
+      I've spent six years doing that across open-source developer ecosystems —
+      in positioning, launches, developer experience, education, and growth.
+      More recently, I've been applying the same method to AI infrastructure,
+      observability, evals, and agent tooling.
+    </p>
+
+    <div class="links">
+      <a href="#work">Work</a>
+      <a href="YOUR-GITHUB-URL">GitHub</a>
+      <a href="YOUR-LINKEDIN-URL">LinkedIn</a>
+      <a href="assets/mideg-dugarova-cv.pdf">CV</a>
+    </div>
+  </header>
+
+
+  <!-- FEATURED WORK -->
+
+  <section id="work">
+    <h2>Featured work</h2>
+
+
+    <article class="project">
+      <p class="label">Product / Competitive Analysis</p>
+
+      <h3>
+        The trace-to-eval loop is table stakes.
+        Where it runs is the actual decision.
+      </h3>
+
+      <p>
+        I wanted to know whether Langfuse and LangSmith meaningfully differ on
+        the workflow every observability vendor now demos: bad production trace
+        → dataset → eval → regression test.
+      </p>
+
+      <p>
+        I built the full loop in Langfuse and reconstructed the LangSmith path
+        from its current docs. The interesting result was that the loop itself
+        wasn't the differentiator. Deployment boundary and framework coupling
+        were.
+      </p>
+
+      <p>
+        The piece is explicit about the asymmetry: one side is hands-on, the
+        other researched. I don't call something a benchmark when it isn't one.
+      </p>
+
+      <a class="project-link" href="PROJECT-LINK-1">
+        Read the analysis →
+      </a>
+    </article>
+
+
+    <article class="project">
+      <p class="label">Technical Argument</p>
+
+      <h3>
+        Your LLM trace is a flat log. Here's why that's the problem.
+      </h3>
+
+      <p>
+        An LLM application can return a bad answer while every function
+        succeeds. Nothing crashes, so traditional monitoring has very little
+        to tell you.
+      </p>
+
+      <p>
+        I start from that failure mode and work backwards: why flat logs lose
+        the causal structure of a multi-step LLM system, what spans restore,
+        and what observability has to look like when “wrong” is not an
+        exception.
+      </p>
+
+      <a class="project-link" href="PROJECT-LINK-2">
+        Read the article →
+      </a>
+    </article>
+
+
+    <article class="project">
+      <p class="label">Product / Developer Education</p>
+
+      <h3>Operating Production Agents</h3>
+
+      <p>
+        One support-triage agent, progressively made harder to break.
+      </p>
+
+      <p>
+        Across seven modules it acquires tracing, evals, reliability checks,
+        cost and latency routing, guardrails, and a production runbook. The
+        instruction runs inside the terminal rather than sending the learner
+        back and forth between prose and code.
+      </p>
+
+      <p>
+        Langfuse is deliberately optional: without an account, the same trace
+        events fall back to local JSON. I didn't want signup to be a
+        prerequisite for discovering whether the observability layer is useful.
+      </p>
+
+      <a class="project-link"
+         href="YOUR-OPERATING-PRODUCTION-AGENTS-URL">
+        Explore the repo →
+      </a>
+    </article>
+
+
+    <article class="project">
+      <p class="label">Developer Experience</p>
+
+      <h3>
+        Langfuse Docs: Friction Notes from a First Run
+      </h3>
+
+      <p>
+        I kept a friction log while building against the Python SDK rather than
+        trying to reconstruct the experience afterwards.
+      </p>
+
+      <p>
+        The interesting problems weren't missing APIs. They were mismatches
+        between what the system was doing and what a new user could infer from
+        the symptom in front of them.
+      </p>
+
+      <p>
+        A script exits successfully but no trace appears. Auto-instrumentation
+        changes the path for linking a prompt to a generation. Legacy
+        configuration names create ambiguity even when compatibility code
+        prevents an error.
+      </p>
+
+      <p>
+        Each note ends with the smallest docs change I'd actually propose in a
+        PR.
+      </p>
+
+      <a class="project-link" href="PROJECT-LINK-4">
+        Read the notes →
+      </a>
+    </article>
+
+  </section>
+
+
+  <!-- IMPACT -->
+
+  <section>
+    <h2>A few things that changed</h2>
+
+    <div class="impact-item">
+      <span class="impact-number">2,000+</span>
+      developers in an acquisition experiment designed specifically to reach
+      outside the existing ecosystem; 60% reported being new to it.
+    </div>
+
+    <div class="impact-item">
+      <span class="impact-number">400+</span>
+      pieces of developer feedback turned into a structured friction report;
+      several resulting DX fixes shipped.
+    </div>
+
+    <div class="impact-item">
+      <span class="impact-number">40+</span>
+      teams taken from concept to production while I ran Parity's builder
+      program.
+    </div>
+
+    <div class="impact-item">
+      <span class="impact-number">30+</span>
+      partner teams taken through to live integrations after I built the
+      onboarding and support path at Evmos.
+    </div>
+  </section>
+
+
+  <!-- ABOUT -->
+
+  <section class="about">
+    <h2>About</h2>
+
+    <p>
+      <strong>I ended up in product marketing from the wrong direction.</strong>
+    </p>
+
+    <p>
+      I started close to developers: helping teams get from an idea to a
+      working integration, fixing onboarding gaps, owning docs, teaching SDKs,
+      and watching launches fail in ways the launch metrics didn't explain.
+    </p>
+
+    <p>
+      Over time the recurring problem became obvious: technically correct
+      products can still be badly understood. A feature can ship,
+      documentation can exist, traffic can arrive — and adoption can remain
+      near zero because the story is about the mechanism instead of the job.
+    </p>
+
+    <p>
+      That's the part I like working on.
+    </p>
+
+    <p>
+      My background is unusually mixed: developer ecosystems and GTM
+      professionally, mathematics and computer science academically, and
+      enough Python and Rust to inspect what I'm supposed to be marketing
+      before I form an opinion about it.
+    </p>
+  </section>
+
+
+  <!-- FOOTER -->
+
+  <footer>
+    <p>
+      Berlin / remote. Currently interested in AI infrastructure and developer
+      products where the technical details actually change the GTM story.
+    </p>
+
+    <p>
+      <a href="mailto:YOUR-EMAIL">Email</a>
+      ·
+      <a href="YOUR-GITHUB-URL">GitHub</a>
+      ·
+      <a href="YOUR-LINKEDIN-URL">LinkedIn</a>
+      ·
+      <a href="assets/mideg-dugarova-cv.pdf">CV</a>
+    </p>
+  </footer>
+
+</main>
+
+</body>
+</html>
