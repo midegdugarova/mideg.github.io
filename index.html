@@ -238,24 +238,28 @@
     </article>
 
 <article class="project">
-  <p class="label">Production AI / Developer Education</p>
+  <p class="label">Production AI / Vector Search</p>
 
   <h3>
     Qdrant in Production: 10 Gotchas the Quickstart Won't Tell You
   </h3>
 
   <p>
-    I collected the failure modes that don't show up in a five-minute vector
-    search demo: unindexed payload filters, immutable collection choices,
-    silent data loss through the wrong update operation, missing score
-    thresholds, HNSW tuning, backups, and hybrid-search query shape.
+    The five-minute vector-search demo hides most of the decisions that matter
+    once the system has real traffic and real data.
   </p>
 
   <p>
-    The pattern underneath is the interesting part: Qdrant's defaults are
-    good for getting to a result quickly, while production turns those defaults
-    into explicit engineering decisions. The most dangerous failures are the
-    ones that stay technically correct while becoming operationally wrong.
+    I worked through ten failure modes — from payload indexing and update
+    semantics to score thresholds, HNSW tuning, backups, and hybrid search.
+    The recurring pattern was more interesting than any individual gotcha:
+    defaults that are excellent for reaching a first result become explicit
+    engineering decisions in production.
+  </p>
+
+  <p>
+    The dangerous failures aren't always the ones that crash. They're the ones
+    where the system keeps working while becoming operationally wrong.
   </p>
 
   <a class="project-link"
