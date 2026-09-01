@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Langfuse vs LangSmith — Mideg Dugarova</title>
+
+  <meta
+    name="description"
+    content="A hands-on comparison of Langfuse and LangSmith through the trace-to-eval workflow."
+  >
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: #fafafa;
+      color: #171717;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.7;
+    }
+
+    main {
+      width: min(820px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 70px 0 50px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 36px;
+      color: #555;
+    }
+
+    .eyebrow {
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #666;
+      font-weight: 600;
+    }
+
+    h1 {
+      margin: 14px 0 22px;
+      max-width: 780px;
+      font-size: clamp(2.7rem, 6vw, 5rem);
+      line-height: 1.02;
+      letter-spacing: -0.05em;
+      font-weight: 650;
+    }
+
+    .dek {
+      max-width: 740px;
+      font-size: 1.22rem;
+      color: #444;
+    }
+
+    .meta {
+      margin-top: 28px;
+      font-size: 0.92rem;
+      color: #666;
+    }
+
+    article {
+      padding: 60px 0 90px;
+    }
+
+    h2 {
+      margin-top: 60px;
+      margin-bottom: 20px;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin-top: 38px;
+      margin-bottom: 14px;
+      font-size: 1.35rem;
+    }
+
+    p {
+      margin: 0 0 20px;
+      font-size: 1.03rem;
+    }
+
+    strong {
+      font-weight: 650;
+    }
+
+    blockquote {
+      margin: 30px 0;
+      padding-left: 22px;
+      border-left: 3px solid #bbb;
+      color: #444;
+      font-size: 1.06rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 28px 0 34px;
+      font-size: 0.92rem;
+    }
+
+    th,
+    td {
+      text-align: left;
+      vertical-align: top;
+      padding: 12px 10px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      font-weight: 650;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+      background: #f0f0f0;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    pre {
+      overflow-x: auto;
+      padding: 20px;
+      background: #111;
+      color: #f5f5f5;
+      border-radius: 8px;
+      margin: 28px 0;
+    }
+
+    pre code {
+      padding: 0;
+      background: transparent;
+      color: inherit;
+    }
+
+    .callout {
+      margin: 34px 0;
+      padding: 22px 24px;
+      background: #f1f1f1;
+      border-radius: 8px;
+    }
+
+    .opinion {
+      margin: 50px 0 20px;
+      padding-top: 32px;
+      border-top: 1px solid #bbb;
+    }
+
+    .footer-nav {
+      padding: 40px 0 70px;
+      border-top: 1px solid #ddd;
+    }
+
+    a {
+      color: inherit;
+      text-underline-offset: 4px;
+    }
+
+    @media (max-width: 650px) {
+      header {
+        padding-top: 45px;
+      }
+
+      article {
+        padding-top: 45px;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main>
+
+  <header>
+    <a class="back" href="../index.html">← Back to portfolio</a>
+
+    <p class="eyebrow">Product / Competitive Analysis</p>
+
+    <h1>
+      The trace-to-eval loop is table stakes.
+      Where it runs is the actual decision.
+    </h1>
+
+    <p class="dek">
+      Langfuse vs. LangSmith, judged on one workflow:
+      how you get from “I saw a bad answer in production”
+      to “I have a regression test that guards against it.”
+    </p>
+
+    <p class="meta">
+      Hands-on Langfuse · LangSmith researched from current docs · August 2026
+    </p>
+  </header>
+
+
+  <article>
+
+    <p>
+      Every LLM observability vendor sells you on evals now. The demo is always
+      the same: here's a trace, here's a score, here's a dataset, look how easy.
+      So I picked the one workflow that actually matters day to day — the closed
+      loop from a bad trace to a regression test — and built it end to end in
+      Langfuse, then traced the same path through LangSmith's current docs to see
+      where they really diverge.
+    </p>
+
+    <p>
+      The answer surprised me. The loop itself is nearly identical in both.
+      The difference that matters is somewhere the demos never point.
+    </p>
+
+    <p>
+      I'm holding this to two tools on purpose. Phoenix/Arize, Braintrust, and
+      generic OpenTelemetry-based stacks all close some version of this loop too.
+      But Langfuse and LangSmith are the closest all-in-one comparison, and
+      narrowing to two is what lets this go deep instead of wide.
+    </p>
+
+
+    <h2>Method: what's tested vs. what's researched</h2>
+
+    <p>
+      Being explicit, because it changes how much you should trust each half:
+    </p>
+
+    <p>
+      <strong>Langfuse: hands-on.</strong>
+      I built the full loop — instrumented a small RAG pipeline using the Python
+      SDK v4 and OpenTelemetry, captured traces, created an 8-item dataset, wrote
+      two evaluators, and ran a two-variant experiment with side-by-side scored
+      runs. Every Langfuse step below, I actually ran.
+    </p>
+
+    <p>
+      <strong>LangSmith: documentation-based.</strong>
+      I traced the equivalent workflow through LangChain's current docs but did
+      not run it against a live account. Where I'm inferring, I say so. Treat the
+      LangSmith column as “what the docs describe,” not “what I stopwatch timed.”
+    </p>
+
+    <p>
+      That asymmetry is a real limitation of this piece. It's also the honest
+      state of it, and I'd rather show the seams than pretend I benchmarked both.
+    </p>
+
+
+    <h2>The loop, side by side</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>Langfuse — ran it</th>
+          <th>LangSmith — from docs</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td><strong>1. Get the trace</strong></td>
+          <td>Instrument the app; SDK ships spans and generations. Framework-agnostic.</td>
+          <td>Auto-tracing, especially tight if you're on LangChain/LangGraph.</td>
+        </tr>
+
+        <tr>
+          <td><strong>2. Spot the bad one</strong></td>
+          <td>Filter traces by tag/session, open the tree.</td>
+          <td>Filter runs in the Runs tab, open the run.</td>
+        </tr>
+
+        <tr>
+          <td><strong>3. Trace → dataset</strong></td>
+          <td>“Add to dataset” from the UI, or <code>create_dataset_item</code> in code.</td>
+          <td>“Add to → Dataset” from the run view.</td>
+        </tr>
+
+        <tr>
+          <td><strong>4. Define scoring</strong></td>
+          <td>A task function + evaluators using <code>run_experiment</code>.</td>
+          <td>Evaluators + <code>evaluate()</code> over the dataset.</td>
+        </tr>
+
+        <tr>
+          <td><strong>5. Run + compare</strong></td>
+          <td>Scored runs compared side by side.</td>
+          <td>Experiment compared against past runs; CI gating is documented.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      Read that table honestly, and mind the asymmetry: I ran the Langfuse
+      column and read the LangSmith one. So I won't call it a tie in measured UX.
+      What I can say is narrower and still decisive: on documented mechanics,
+      the two loops are very close.
+    </p>
+
+    <p>
+      Both capture a trace, promote it into a dataset in roughly one action,
+      attach LLM-judge and code-based scorers, and produce comparable experiment
+      runs.
+    </p>
+
+    <p>
+      If anything the lean may go the other way for a LangChain-native team:
+      LangSmith's “add run to dataset” UX is very direct, and step 1 costs almost
+      nothing when the framework already understands the execution graph.
+    </p>
+
+    <p>
+      Anyone claiming Langfuse closes the loop in dramatically fewer steps is
+      selling.
+    </p>
+
+
+    <div class="callout">
+      <strong>One real result from the loop:</strong>
+
+      <p>
+        I tested whether a “grounding-hardened” answer prompt improved
+        faithfulness on an 8-item dataset.
+      </p>
+
+      <p>
+        It didn't.
+      </p>
+
+      <p>
+        Groundedness was identical to the terse baseline, while the hardened
+        prompt added <strong>38 system tokens per call — about 2.7× the baseline
+        system prompt — for zero measured gain.</strong>
+      </p>
+
+      <p>
+        The value of the loop wasn't a win. It was cheaply disproving a
+        plausible-sounding change before it shipped.
+      </p>
+    </div>
+
+
+    <h2>Where they actually diverge: where the loop is allowed to run</h2>
+
+    <p>
+      The loop is the same. The <strong>substrate underneath it is not.</strong>
+    </p>
+
+    <p>
+      <strong>Langfuse is MIT-licensed and self-hostable as a first-class path.</strong>
+      The same core stack can run in Langfuse Cloud or inside your own
+      infrastructure.
+    </p>
+
+    <p>
+      That means the closed loop — traces, datasets, evaluators, experiment
+      history — can live inside the same data boundary as the production system.
+    </p>
+
+    <p>
+      For a team handling regulated or highly sensitive data, that changes the
+      decision completely. The trace-to-eval loop reads the exact prompts,
+      completions, metadata, and context that are most likely to contain
+      sensitive information.
+    </p>
+
+    <p>
+      A perfect eval workflow you cannot legally point at production data isn't
+      a workflow you can use.
+    </p>
+
+    <p>
+      <strong>LangSmith is proprietary and cloud-first.</strong>
+      Self-hosting exists at the enterprise level rather than as the default
+      adoption path.
+    </p>
+
+    <p>
+      That's completely fine for a large class of teams. It's a non-starter for
+      another.
+    </p>
+
+    <blockquote>
+      The trace-to-eval loop is only as adoptable as the place it's allowed to run.
+    </blockquote>
+
+
+    <h2>Self-hosting is a capability, not a free lunch</h2>
+
+    <p>
+      This is where open-source comparisons often become dishonest.
+    </p>
+
+    <p>
+      Self-hosting Langfuse is not “run one container and forget about it.”
+      The production architecture means operating the web and worker services
+      alongside the underlying stateful components: ClickHouse, Postgres,
+      Redis/Valkey, and S3-compatible object storage.
+    </p>
+
+    <p>
+      That's real operational surface area.
+    </p>
+
+    <p>
+      A team without the appetite to run and monitor that stack should think
+      seriously before choosing self-hosting over Langfuse Cloud.
+    </p>
+
+    <p>
+      The honest framing is:
+    </p>
+
+    <blockquote>
+      You can run the loop entirely on your own infrastructure.
+      That does not mean doing so is operationally free.
+    </blockquote>
+
+
+    <h2>The second divergence: framework coupling</h2>
+
+    <p>
+      LangSmith's loop is strongest inside the LangChain/LangGraph world. Its
+      deepest tracing benefits from knowing the framework's execution model.
+    </p>
+
+    <p>
+      Langfuse is more neutral. My test pipeline used the raw Anthropic SDK and
+      a hand-rolled retrieval step, and the workflow didn't care.
+    </p>
+
+    <p>
+      If your stack isn't LangChain, framework neutrality stops being a
+      positioning phrase and becomes a practical adoption advantage.
+    </p>
+
+
+    <h2>Where Langfuse is not the better pick</h2>
+
+    <p>
+      If you are already all-in on LangChain/LangGraph, run on managed cloud,
+      and have no meaningful data-residency constraint, LangSmith may simply be
+      the better fit.
+    </p>
+
+    <p>
+      Step 1 is nearly free because the framework understands itself. The
+      trace-to-dataset flow is tight. The native execution detail is richer than
+      generic instrumentation can provide.
+    </p>
+
+    <p>
+      Choosing Langfuse purely to gain portability you never intend to exercise
+      would be trading away real ergonomic value for an option with no expected
+      use.
+    </p>
+
+    <p>
+      Buy the tool that fits the stack you actually have.
+    </p>
+
+
+    <div class="opinion">
+      <h2>The opinion</h2>
+
+      <p>
+        Stop evaluating these tools on “who has evals” or “who closes the loop
+        faster.”
+      </p>
+
+      <p>
+        Both have evals. The loop is table stakes.
+      </p>
+
+      <p>
+        The more useful question is:
+      </p>
+
+      <blockquote>
+        Do you need to run that loop on your own terms — your infrastructure,
+        your data boundary, your non-LangChain stack?
+      </blockquote>
+
+      <p>
+        <strong>Yes:</strong> Langfuse has the stronger case. The open-source
+        core, first-class self-hosting path, and framework-neutral tracing give
+        you control over where the workflow lives.
+      </p>
+
+      <p>
+        <strong>No:</strong> if you're all-in on LangChain and managed cloud is
+        fine, LangSmith gives you a tighter native experience without paying an
+        operational cost for portability you don't need.
+      </p>
+
+      <p>
+        The loop is table stakes. Where it's allowed to run is the actual
+        decision — and that's the line the feature checklist can't show you.
+      </p>
+    </div>
+
+
+    <h2>The loop, in code</h2>
+
+    <p>
+      This is the core of the Langfuse loop I ran: one LLM-as-judge evaluator,
+      one deterministic evaluator, and the experiment call.
+    </p>
+
+    <pre><code>from langfuse.experiment import Evaluation
+
+# LLM-as-judge: is every claim grounded in retrieved context?
+def evaluate_groundedness(
+    *,
+    input,
+    output,
+    expected_output=None,
+    metadata=None,
+    **kwargs
+):
+    verdict = judge(
+        context=output["context"],
+        question=input,
+        answer=output["answer"]
+    )
+
+    return Evaluation(
+        name="groundedness",
+        value=verdict,
+        data_type="NUMERIC"
+    )
+
+
+# Deterministic scorer:
+# did the model refuse the unanswerable items?
+def evaluate_refusal(
+    *,
+    input,
+    output,
+    expected_output=None,
+    metadata=None,
+    **kwargs
+):
+    if not metadata or metadata.get("answerable", True):
+        return []
+
+    refused = bool(
+        REFUSAL_PATTERN.search(output["answer"])
+    )
+
+    return Evaluation(
+        name="refused_when_unanswerable",
+        value=refused,
+        data_type="BOOLEAN"
+    )
+
+
+dataset = langfuse.get_dataset(
+    "qdrant-qa-groundedness"
+)
+
+result = dataset.run_experiment(
+    name="qdrant-qa",
+    run_name="variant-a-terse",
+    task=make_task(SYSTEM_A),
+    evaluators=[
+        evaluate_groundedness,
+        evaluate_refusal
+    ],
+)</code></pre>
+
+    <p>
+      Point the same dataset at a second <code>run_name</code> with a different
+      prompt and you have the regression comparison.
+    </p>
+
+    <p>
+      That's the mechanism: trace the app, promote failure cases into a dataset,
+      score them, compare runs.
+    </p>
+
+    <p class="meta">
+      Tested on Langfuse Python SDK v4. LangSmith workflow reconstructed from
+      its published documentation, not run hands-on. August 2026.
+    </p>
+
+  </article>
+
+
+  <div class="footer-nav">
+    <a href="../index.html">← Back to portfolio</a>
+  </div>
+
+</main>
+
+</body>
+</html>
