@@ -1,1 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>Langfuse Docs Friction Notes — Mideg Dugarova</title>
+
+  <meta
+    name="description"
+    content="First-run developer experience notes and proposed documentation fixes from building against the Langfuse Python SDK."
+  >
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #fafafa;
+      color: #171717;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.7;
+    }
+
+    main {
+      width: min(820px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 70px 0 50px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 36px;
+      color: #555;
+    }
+
+    .eyebrow {
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #666;
+      font-weight: 600;
+    }
+
+    h1 {
+      margin: 14px 0 22px;
+      max-width: 780px;
+      font-size: clamp(2.7rem, 6vw, 5rem);
+      line-height: 1.02;
+      letter-spacing: -0.05em;
+      font-weight: 650;
+    }
+
+    .dek {
+      max-width: 740px;
+      font-size: 1.22rem;
+      color: #444;
+    }
+
+    .meta {
+      margin-top: 28px;
+      font-size: 0.92rem;
+      color: #666;
+    }
+
+    article {
+      padding: 60px 0 90px;
+    }
+
+    h2 {
+      margin-top: 60px;
+      margin-bottom: 20px;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin-top: 34px;
+      margin-bottom: 12px;
+      font-size: 1.28rem;
+    }
+
+    p {
+      margin: 0 0 20px;
+      font-size: 1.03rem;
+    }
+
+    strong {
+      font-weight: 650;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+      background: #f0f0f0;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    pre {
+      overflow-x: auto;
+      padding: 20px;
+      background: #111;
+      color: #f5f5f5;
+      border-radius: 8px;
+      margin: 28px 0;
+    }
+
+    pre code {
+      padding: 0;
+      background: transparent;
+      color: inherit;
+    }
+
+    blockquote {
+      margin: 28px 0;
+      padding-left: 22px;
+      border-left: 3px solid #bbb;
+      color: #444;
+    }
+
+    .finding {
+      margin-top: 55px;
+      padding-top: 34px;
+      border-top: 1px solid #ddd;
+    }
+
+    .status {
+      display: inline-block;
+      margin-bottom: 16px;
+      padding: 4px 9px;
+      background: #eee;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .footer-nav {
+      padding: 40px 0 70px;
+      border-top: 1px solid #ddd;
+    }
+
+    a {
+      color: inherit;
+      text-underline-offset: 4px;
+    }
+
+    @media (max-width: 650px) {
+      header {
+        padding-top: 45px;
+      }
+
+      article {
+        padding-top: 45px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main>
+
+  <header>
+    <a class="back" href="../index.html">← Back to portfolio</a>
+
+    <p class="eyebrow">Developer Experience / Documentation</p>
+
+    <h1>
+      Langfuse Docs: friction notes from a first run.
+    </h1>
+
+    <p class="dek">
+      Real friction I hit while building against the Langfuse Python SDK,
+      written the way I'd open a docs PR: what happened, where the mental
+      model broke, and the smallest change I'd make.
+    </p>
+
+    <p class="meta">
+      Python SDK · OpenTelemetry instrumentation · verified against current docs
+    </p>
+  </header>
+
+
+  <article>
+
+    <p>
+      I kept these notes while building the demo repo rather than reconstructing
+      the experience afterwards.
+    </p>
+
+    <p>
+      None of the problems below is really about a missing API. The SDK worked.
+      Authentication worked. Tracing worked. Prompt linking worked.
+    </p>
+
+    <p>
+      The friction appeared where the system's internal behaviour and the
+      developer's observable symptom pointed to different explanations.
+    </p>
+
+
+    <section class="finding">
+
+      <h2>
+        1. <code>flush()</code> is documented, but the failure mode is too easy to miss
+      </h2>
+
+      <h3>What happened</h3>
+
+      <p>
+        My first quickstart script ran cleanly, printed the model's answer, and
+        exited 0 — but no trace showed up in the dashboard.
+      </p>
+
+      <p>
+        Langfuse batches events and sends them asynchronously. A short-lived
+        process can exit before those events are flushed.
+      </p>
+
+      <p>
+        The fix is one line:
+      </p>
+
+      <pre><code>langfuse.flush()</code></pre>
+
+      <p>
+        But until you know that, the natural diagnosis is “my auth is wrong” or
+        “the SDK is broken,” so you start debugging the wrong layer.
+      </p>
+
+      <h3>Where the docs fall short</h3>
+
+      <p>
+        The quickstart already includes <code>langfuse.flush()</code>, so this
+        isn't a missing-documentation problem.
+      </p>
+
+      <p>
+        The issue is framing. The line reads as lifecycle guidance rather than
+        as the fix for the most confusing first-run symptom:
+      </p>
+
+      <blockquote>
+        The program worked, but nothing appeared in Langfuse.
+      </blockquote>
+
+      <h3>Proposed fix</h3>
+
+      <blockquote>
+        <strong>⚠️ Script finished successfully, but no trace appeared?</strong>
+        <br><br>
+        Langfuse sends events asynchronously. In short-lived scripts, notebooks,
+        and CLIs, the process may exit before buffered events are sent — even when
+        authentication succeeded and your code ran correctly.
+        <br><br>
+        Call <code>langfuse.flush()</code> or
+        <code>langfuse.shutdown()</code> before the process exits. Long-running
+        servers normally do not need this on every request.
+      </blockquote>
+
+      <p>
+        The useful change isn't documenting another API. It's connecting the API
+        to the failure state the developer is actually looking at.
+      </p>
+
+    </section>
+
+
+    <section class="finding">
+
+      <h2>
+        2. Prompt linking through auto-instrumentation was non-obvious
+      </h2>
+
+      <span class="status">CURRENT DOCS NOW ADDRESS THIS</span>
+
+      <h3>What happened</h3>
+
+      <p>
+        After an eval experiment, I promoted the winning prompt into Langfuse
+        prompt management and wanted every production trace to record which
+        prompt version produced it.
+      </p>
+
+      <p>
+        My pipeline instruments Anthropic through OpenTelemetry:
+      </p>
+
+      <pre><code>AnthropicInstrumentor()</code></pre>
+
+      <p>
+        That means application code does not manually construct the Langfuse
+        generation containing the model call.
+      </p>
+
+      <p>
+        The obvious prompt-linking pattern uses:
+      </p>
+
+      <pre><code>with langfuse.start_as_current_observation(
+    as_type="generation",
+    prompt=prompt,
+) as generation:
+    ...
+</code></pre>
+
+      <p>
+        That maps cleanly to manually-created generations. It doesn't map as
+        naturally to auto-instrumentation because there is no generation object
+        in application code to pass <code>prompt=</code> into.
+      </p>
+
+      <p>
+        The working pattern was:
+      </p>
+
+      <pre><code>with langfuse.propagate_attributes(prompt=prompt):
+    ...
+</code></pre>
+
+      <h3>Status</h3>
+
+      <p>
+        The current Langfuse docs now explicitly describe third-party
+        instrumentation as a reason to use propagation.
+      </p>
+
+      <p>
+        So I would not file the original issue against the current page.
+        The gap I hit has effectively been closed.
+      </p>
+
+      <h3>Remaining improvement</h3>
+
+      <p>
+        I'd still surface the decision earlier:
+      </p>
+
+      <blockquote>
+        <strong>How is your generation created?</strong>
+        <br><br>
+        Your code creates it → attach <code>prompt=</code> directly.
+        <br><br>
+        An integration or OpenTelemetry instrumentor creates it → propagate the
+        prompt around the instrumented call.
+      </blockquote>
+
+      <p>
+        That distinction is more useful to a first-time user than organizing the
+        choice around how many generations happen to share the prompt.
+      </p>
+
+    </section>
+
+
+    <section class="finding">
+
+      <h2>
+        3. <code>LANGFUSE_HOST</code> vs. <code>LANGFUSE_BASE_URL</code> creates avoidable setup ambiguity
+      </h2>
+
+      <h3>What happened</h3>
+
+      <p>
+        While wiring the demo repo, I encountered both names in the surrounding
+        Langfuse ecosystem and added a defensive compatibility check:
+      </p>
+
+      <pre><code>base_url = (
+    os.getenv("LANGFUSE_BASE_URL")
+    or os.getenv("LANGFUSE_HOST")
+)</code></pre>
+
+      <p>
+        The current SDK naming is <code>base_url</code> /
+        <code>LANGFUSE_BASE_URL</code>, while older host terminology remains
+        supported for compatibility.
+      </p>
+
+      <p>
+        Nothing actually broke.
+      </p>
+
+      <p>
+        But first-run configuration is exactly where two names for the same
+        concept create unnecessary uncertainty:
+      </p>
+
+      <blockquote>
+        Are these aliases?<br>
+        Did the SDK change?<br>
+        Does one apply only to self-hosting?<br>
+        Am I reading an outdated example?
+      </blockquote>
+
+      <h3>Proposed fix</h3>
+
+      <p>
+        Standardize current first-party examples on:
+      </p>
+
+      <pre><code>LANGFUSE_BASE_URL=</code></pre>
+
+      <p>
+        And whenever the legacy name appears, make the relationship explicit:
+      </p>
+
+      <blockquote>
+        <code>LANGFUSE_HOST</code> is a legacy alias retained for backwards
+        compatibility. New integrations should use
+        <code>LANGFUSE_BASE_URL</code>.
+      </blockquote>
+
+      <p>
+        That removes the need for users to infer whether the two names have
+        different semantics.
+      </p>
+
+    </section>
+
+
+    <section class="finding">
+
+      <h2>What these issues have in common</h2>
+
+      <p>
+        None of them is a missing-feature problem.
+      </p>
+
+      <p>
+        The SDK worked. The APIs existed. Compatibility paths were present.
+      </p>
+
+      <p>
+        The friction came from the gap between
+        <strong>what the system was doing internally</strong> and
+        <strong>what a new user could infer from the symptom in front of them</strong>.
+      </p>
+
+      <p>
+        That's the part of developer documentation I care about most:
+        not whether every method exists in the reference, but whether the docs
+        intercept the wrong mental model before the developer loses twenty
+        minutes debugging a system that is behaving exactly as designed.
+      </p>
+
+      <p>
+        These notes came directly from building the demo repo, not from reading
+        the docs looking for things to criticize.
+      </p>
+
+    </section>
+
+  </article>
+
+
+  <div class="footer-nav">
+    <a href="../index.html">← Back to portfolio</a>
+  </div>
+
+</main>
+
+</body>
+</html>
