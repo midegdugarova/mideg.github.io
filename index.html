@@ -212,19 +212,21 @@
       </h3>
 
       <p>
-        I wanted to know whether Langfuse and LangSmith meaningfully differ on
-        the workflow every observability vendor now demos: bad production trace
-        → dataset → eval → regression test.
-      </p>
+        Langfuse and LangSmith both show the same demo now: bad trace → dataset → eval → regression test. I wanted to know if they actually differ anywhere that matters.
 
-      <p>
-      I built the full loop in Langfuse and reconstructed the LangSmith path from its current docs. The loop itself turned out not to be the differentiator. Deployment boundary and framework coupling were.
+What actually separates them is where you run it and how tightly it ties to your framework.
 
 
       </p>
 
       <p>
-       One side is hands-on, the other researched. I don't call something a benchmark when it isn't one.
+      So I built the whole thing in Langfuse and pieced together the LangSmith version from their docs. Turns out the loop itself is identical. 
+
+
+      </p>
+
+      <p>
+       One side is hands-on, the other researched. No benchmarks yet.
       </p>
 
       <a class="project-link" href="work/langfuse-vs-langsmith.html">
