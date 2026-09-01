@@ -1,1 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>Your LLM trace is a flat log — Mideg Dugarova</title>
+
+  <meta
+    name="description"
+    content="Why flat logs fail for multi-step LLM applications, and how structured traces turn bad outputs into debuggable systems."
+  >
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #fafafa;
+      color: #171717;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.7;
+    }
+
+    main {
+      width: min(820px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 70px 0 50px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 36px;
+      color: #555;
+    }
+
+    .eyebrow {
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #666;
+      font-weight: 600;
+    }
+
+    h1 {
+      margin: 14px 0 22px;
+      max-width: 780px;
+      font-size: clamp(2.7rem, 6vw, 5rem);
+      line-height: 1.02;
+      letter-spacing: -0.05em;
+      font-weight: 650;
+    }
+
+    .dek {
+      max-width: 740px;
+      font-size: 1.22rem;
+      color: #444;
+    }
+
+    .meta {
+      margin-top: 28px;
+      font-size: 0.92rem;
+      color: #666;
+    }
+
+    article {
+      padding: 60px 0 90px;
+    }
+
+    h2 {
+      margin-top: 60px;
+      margin-bottom: 20px;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0 0 20px;
+      font-size: 1.03rem;
+    }
+
+    strong {
+      font-weight: 650;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+      background: #f0f0f0;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    pre {
+      overflow-x: auto;
+      padding: 20px;
+      background: #111;
+      color: #f5f5f5;
+      border-radius: 8px;
+      margin: 28px 0;
+    }
+
+    pre code {
+      padding: 0;
+      background: transparent;
+      color: inherit;
+    }
+
+    blockquote {
+      margin: 30px 0;
+      padding-left: 22px;
+      border-left: 3px solid #bbb;
+      color: #444;
+      font-size: 1.06rem;
+    }
+
+    .callout {
+      margin: 34px 0;
+      padding: 22px 24px;
+      background: #f1f1f1;
+      border-radius: 8px;
+    }
+
+    .footer-nav {
+      padding: 40px 0 70px;
+      border-top: 1px solid #ddd;
+    }
+
+    a {
+      color: inherit;
+      text-underline-offset: 4px;
+    }
+
+    @media (max-width: 650px) {
+      header {
+        padding-top: 45px;
+      }
+
+      article {
+        padding-top: 45px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main>
+
+  <header>
+    <a class="back" href="../index.html">← Back to portfolio</a>
+
+    <p class="eyebrow">Technical Writing / LLM Observability</p>
+
+    <h1>
+      Your LLM trace is a flat log.
+      Here's why that's the problem.
+    </h1>
+
+    <p class="dek">
+      A multi-step LLM application can return the wrong answer while every
+      function succeeds. When nothing crashes, traditional monitoring has very
+      little to tell you.
+    </p>
+  </header>
+
+
+  <article>
+
+    <p>
+      Your RAG app gave a wrong answer this morning. Nothing threw: a user asked
+      about the refund policy for annual plans and got the monthly policy back,
+      delivered with total confidence.
+    </p>
+
+    <p>
+      You check the deploy log and nothing shipped overnight. You check the
+      error tracker and there's no stack trace, because nothing crashed. Every
+      function returned cleanly, which is exactly the problem.
+    </p>
+
+    <p>
+      Traditional monitoring exists to tell you that something broke, and here
+      nothing broke. The code ran end to end and produced a bad answer anyway.
+    </p>
+
+    <p>
+      Multi-step LLM apps put you in this situation constantly. A pipeline that
+      retrieves documents, then drafts and reviews an answer, has several places
+      to go wrong that all look identical from the outside.
+    </p>
+
+    <p>
+      When the final answer is bad, the question that matters is which step is
+      guilty, and a log line can't answer it.
+    </p>
+
+
+    <h2>The obvious first move, and why it fails</h2>
+
+    <p>
+      Most people start by logging the request as one unit: input in, answer out,
+      wrapped in a single log line or one flat trace.
+    </p>
+
+    <p>
+      That confirms what you already knew, which is that this input produced
+      this bad output.
+    </p>
+
+    <p>
+      Everything in between — the retrieval call, the first model call, the
+      review pass — is collapsed into one opaque blob.
+    </p>
+
+    <blockquote>
+      The flat log records the crime without recording the suspects.
+    </blockquote>
+
+    <p>
+      You can see that the answer is wrong. You can't see where it went wrong,
+      so your debugging method becomes rereading the prompt and guessing.
+    </p>
+
+
+    <h2>Give the trace the same shape as the pipeline</h2>
+
+    <p>
+      The fix is structural.
+    </p>
+
+    <p>
+      Langfuse models an application in nested levels: a session groups related
+      requests, like the turns of one conversation; a trace is one end-to-end
+      request; and inside the trace sit observations, the units of work.
+    </p>
+
+    <p>
+      An observation is either a span — any step — or a generation, which is a
+      span specialised for an LLM call and therefore also carries the model
+      name, token counts, and cost.
+    </p>
+
+    <p>
+      Here is what that looks like in a real pipeline:
+    </p>
+
+    <pre><code>@observe(name="answer")
+def answer(query: str, context: list[str]) -> str:
+    # @observe names this step "answer" in the tree;
+    # the Anthropic call inside is auto-captured as a generation.
+    ...
+
+
+def run(query: str, session_id: str) -> dict:
+    """One end-to-end request = one trace."""
+
+    with propagate_attributes(
+        session_id=session_id,
+        tags=["pipeline=demo"],
+    ):
+        with langfuse.start_as_current_observation(
+            as_type="span",
+            name="rag-pipeline",
+            input={"query": query}
+        ) as root:
+
+            context = retrieve(query)
+            draft = answer(query, context)
+            review = critique(query, draft)
+
+            root.update(
+                output={
+                    "answer": draft,
+                    "critique": review
+                }
+            )
+
+            return {
+                "answer": draft,
+                "critique": review
+            }</code></pre>
+
+    <p>
+      Nothing here writes a log message.
+    </p>
+
+    <p>
+      The <code>with</code> blocks and <code>@observe</code> decorators declare
+      structure: this request is one trace named <code>rag-pipeline</code>, and
+      everything called inside it hangs off that root.
+    </p>
+
+    <p>
+      What you get in the Langfuse UI is a tree with the same shape as the code:
+      <code>rag-pipeline</code> at the root, with
+      <code>retrieve-documents</code> as a plain span alongside
+      <code>answer</code> and <code>critique</code> as named steps.
+    </p>
+
+    <p>
+      Each LLM call becomes a generation with its own input, output, latency,
+      token usage, and cost.
+    </p>
+
+    <p>
+      The naming is deliberate. Leave the LLM calls to auto-instrumentation
+      alone and they show up under the instrumentor's generic SDK name; the
+      <code>@observe</code> decorator is what makes the tree read like your
+      pipeline instead of like the Anthropic SDK.
+    </p>
+
+
+    <div class="callout">
+      <strong>The payoff is diagnostic separation.</strong>
+
+      <p>
+        If retrieval pulled the monthly-plan page instead of the annual one,
+        you have a retrieval bug. No amount of prompt engineering will fix it.
+      </p>
+
+      <p>
+        If retrieval pulled the right documents and the answer step still got
+        it wrong, the problem is in the prompt or model, and your embeddings are
+        innocent.
+      </p>
+
+      <p>
+        Same bad answer. Completely different fix.
+      </p>
+    </div>
+
+    <p>
+      The tree tells you which one you're facing in about thirty seconds instead
+      of an afternoon.
+    </p>
+
+
+    <h2>What it costs you</h2>
+
+    <p>
+      Instrumentation is code, and you own it now.
+    </p>
+
+    <p>
+      Auto-instrumentation lowers that cost. The
+      <code>AnthropicInstrumentor</code> used alongside this pipeline captures
+      every model call automatically, with tokens and latency attached, and
+      that's a good default.
+    </p>
+
+    <p>
+      But it decides span boundaries for you, and boundaries are where the value
+      lives.
+    </p>
+
+    <p>
+      The instrumentor cannot know that <code>retrieve</code> and
+      <code>answer</code> are separate steps in your mental model of the system.
+      Only manual structure can say that.
+    </p>
+
+    <p>
+      In practice, the useful combination is:
+    </p>
+
+    <blockquote>
+      Auto-instrumentation for the model calls. Hand-written spans for the steps
+      you'll actually debug by.
+    </blockquote>
+
+    <p>
+      Restraint matters too. A trace with forty spans for trivial function calls
+      is as unreadable as a flat log.
+    </p>
+
+    <p>
+      Nest at the level you'd want to see when something breaks, and no deeper.
+    </p>
+
+
+    <h2>Why not just raw OpenTelemetry?</h2>
+
+    <p>
+      Langfuse is built on OpenTelemetry, and you can point generic OTel spans at
+      another backend.
+    </p>
+
+    <p>
+      What you give up is the LLM-shaped layer on top: generations that natively
+      understand models, tokens, and cost, and a UI that renders a prompt and
+      completion as first-class objects instead of as a flat attribute bag.
+    </p>
+
+    <p>
+      If you don't need that layer, plain OpenTelemetry is a legitimate choice.
+      If you do, rebuilding it yourself is the expensive path.
+    </p>
+
+
+    <h2>The less optional caveat: data boundaries</h2>
+
+    <p>
+      Tracing often ships full model inputs and outputs to the observability
+      backend.
+    </p>
+
+    <p>
+      In the refund-policy example, that may mean customer text and internal
+      policy content leaving your application boundary.
+    </p>
+
+    <p>
+      Masking or excluding sensitive fields before they hit the span is
+      therefore a first-class design decision, not a cleanup task for later.
+    </p>
+
+    <p>
+      It is one of the first questions a security review will ask.
+    </p>
+
+
+    <h2>Where this leaves you</h2>
+
+    <p>
+      Structure is what turns:
+    </p>
+
+    <blockquote>
+      “The answer is wrong”
+    </blockquote>
+
+    <p>
+      into:
+    </p>
+
+    <blockquote>
+      “The retrieval step is wrong.”
+    </blockquote>
+
+    <p>
+      That sentence is the difference between guessing and debugging.
+    </p>
+
+    <p>
+      It also compounds. The same tree you built for debugging is the structure
+      that evaluations and per-step cost attribution attach to later.
+    </p>
+
+    <p>
+      Get the shape right first, and the rest of observability has somewhere to
+      live.
+    </p>
+
+  </article>
+
+
+  <div class="footer-nav">
+    <a href="../index.html">← Back to portfolio</a>
+  </div>
+
+</main>
+
+</body>
+</html>
