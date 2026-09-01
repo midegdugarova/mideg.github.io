@@ -174,14 +174,11 @@
     </p>
 
     <h1>
-      I look for the boundary condition that makes a technical product matter.
+      Most technical products are understood worse than they're built. I work on that part.
     </h1>
 
     <p class="intro">
-      Features rarely explain why one developer adopts a product and another
-      doesn't. I usually start one layer lower: what changes the decision,
-      where the workflow breaks, which assumption stops being true, and what
-      the product actually lets someone do.
+     eatures rarely explain why one developer adopts a product and another doesn't. I usually start one layer lower - what actually changes the decision, which is almost never the thing the feature page says.
     </p>
 
     <p class="intro">
@@ -256,8 +253,7 @@
   </p>
 
   <p>
-    The dangerous failures aren't always the ones that crash. They're the ones
-    where the system keeps working while becoming operationally wrong.
+    The worst failures in this list are the ones where nothing crashes and the system quietly becomes wrong.
   </p>
 
   <a class="project-link"
@@ -279,10 +275,7 @@
       </p>
 
       <p>
-        I start from that failure mode and work backwards: why flat logs lose
-        the causal structure of a multi-step LLM system, what spans restore,
-        and what observability has to look like when “wrong” is not an
-        exception.
+        I start from that failure mode and "backpropagate" to what observability actually has to look like when 'wrong' isn't an exception — it's a valid output from a system that ran fine.
       </p>
 
       <a class="project-link" href="PROJECT-LINK-2">
@@ -339,10 +332,7 @@
       </p>
 
       <p>
-        A script exits successfully but no trace appears. Auto-instrumentation
-        changes the path for linking a prompt to a generation. Legacy
-        configuration names create ambiguity even when compatibility code
-        prevents an error.
+        A script exits successfully but no trace appears, auto-instrumentation changes how you link a prompt to a generation, and legacy configuration names create ambiguity that the compatibility code hides instead of resolving.
       </p>
 
       <p>
