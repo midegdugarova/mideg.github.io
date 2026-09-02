@@ -165,102 +165,109 @@
     </h1>
 
     <p class="dek">
-      A multi-step LLM application can return the wrong answer while every
-      function succeeds. When nothing crashes, traditional monitoring has very
-      little to tell you.
+     
+  A multi-step LLM application can return the wrong answer despite every
+  function succeeding. When nothing crashes, traditional monitoring has very
+  little to tell you.
     </p>
   </header>
 
 
-  <article>
+ <article>
 
-    <p>
-      Your RAG app gave a wrong answer this morning. Nothing threw: a user asked
-      about the refund policy for annual plans and got the monthly policy back,
-      delivered with total confidence.
-    </p>
+  <p>
+    Sometimes it happens - your RAG app gave a wrong answer this morning.
+    Nothing threw: a user asked about the refund policy for annual plans and got
+    the monthly policy back, delivered with usual total confidence.
+  </p>
 
-    <p>
-      You check the deploy log and nothing shipped overnight. You check the
-      error tracker and there's no stack trace, because nothing crashed. Every
-      function returned cleanly, which is exactly the problem.
-    </p>
+  <p>
+    You check the deploy log - nothing shipped overnight.
+  </p>
 
-    <p>
-      Traditional monitoring exists to tell you that something broke, and here
-      nothing broke. The code ran end to end and produced a bad answer anyway.
-    </p>
+  <p>
+    You check the error tracker - there's no stack trace, because nothing crashed.
+  </p>
 
-    <p>
-      Multi-step LLM apps put you in this situation constantly. A pipeline that
-      retrieves documents, then drafts and reviews an answer, has several places
-      to go wrong that all look identical from the outside.
-    </p>
+  <p>
+    Every function returned cleanly, and that’s the problem.
+  </p>
 
-    <p>
-      When the final answer is bad, the question that matters is which step is
-      guilty, and a log line can't answer it.
-    </p>
+  <p>
+    Traditional monitoring exists to tell you that something broke, but what do
+    you do when nothing broke? The code ran end to end and produced a bad answer
+    anyway.
+  </p>
 
+  <p>
+    The situation is very familiar to any multi-step LLM apps devs. There are
+    several failure points in a workflow that retrieves documents, drafts an
+    answer, reviews it - and from the outside, they all look identical.
+  </p>
 
-    <h2>The obvious first move, and why it fails</h2>
-
-    <p>
-      Most people start by logging the request as one unit: input in, answer out,
-      wrapped in a single log line or one flat trace.
-    </p>
-
-    <p>
-      That confirms what you already knew, which is that this input produced
-      this bad output.
-    </p>
-
-    <p>
-      Everything in between — the retrieval call, the first model call, the
-      review pass — is collapsed into one opaque blob.
-    </p>
-
-    <blockquote>
-      The flat log records the crime without recording the suspects.
-    </blockquote>
-
-    <p>
-      You can see that the answer is wrong. You can't see where it went wrong,
-      so your debugging method becomes rereading the prompt and guessing.
-    </p>
+  <p>
+    When the final answer is bad, the question is which step is guilty, and a log
+    line can't answer it.
+  </p>
 
 
-    <h2>Give the trace the same shape as the pipeline</h2>
+  <h2>The obvious first move - and why it fails</h2>
 
-    <p>
-      The fix is structural.
-    </p>
+  <p>
+    Most people start by logging the request as one unit: input in, answer out,
+    wrapped in a single log line or one flat trace.
+  </p>
 
-    <p>
-      Langfuse models an application in nested levels: a session groups related
-      requests, like the turns of one conversation; a trace is one end-to-end
-      request; and inside the trace sit observations, the units of work.
-    </p>
+  <p>
+    That confirms what you already knew, which is that this input produced this
+    bad output.
+  </p>
 
-    <p>
-      An observation is either a span — any step — or a generation, which is a
-      span specialised for an LLM call and therefore also carries the model
-      name, token counts, and cost.
-    </p>
+  <p>
+    Everything in between - the retrieval call, the first model call, the review
+    pass - is mixed together in one blob.
+  </p>
 
-    <p>
-      Here is what that looks like in a real pipeline:
-    </p>
+  <p>
+    You can see that the answer is wrong. You can't see where it went wrong, so
+    your debugging method becomes rereading the prompt and guessing.
+  </p>
 
-    <pre><code>@observe(name="answer")
+  <p>
+    The flat logs aren’t helpful.
+  </p>
+
+
+  <h2>Give the trace the same shape as the pipeline</h2>
+
+  <p>
+    The fix is structural.
+  </p>
+
+  <p>
+    Langfuse has a simple hierarchy: a session groups related requests, a trace
+    is one end-to-end request, and observations are the individual steps inside it.
+  </p>
+
+  <p>
+    An observation can be a normal span, or a generation - an LLM call with
+    things like the model, token usage, latency and cost attached.
+  </p>
+
+  <p>
+    For a small RAG pipeline, I want the trace to look roughly like the pipeline
+    itself:
+  </p>
+
+  <pre><code>@observe(name="answer")
 def answer(query: str, context: list[str]) -> str:
-    # @observe names this step "answer" in the tree;
-    # the Anthropic call inside is auto-captured as a generation.
+    # @observe names this step "answer" in the trace.
+    # The Anthropic call inside is captured automatically.
     ...
 
 
 def run(query: str, session_id: str) -> dict:
-    """One end-to-end request = one trace."""
+    """One request = one trace."""
 
     with propagate_attributes(
         session_id=session_id,
@@ -288,178 +295,286 @@ def run(query: str, session_id: str) -> dict:
                 "critique": review
             }</code></pre>
 
-    <p>
-      Nothing here writes a log message.
-    </p>
+  <p>
+    There are no log messages here.
+  </p>
 
-    <p>
-      The <code>with</code> blocks and <code>@observe</code> decorators declare
-      structure: this request is one trace named <code>rag-pipeline</code>, and
-      everything called inside it hangs off that root.
-    </p>
+  <p>
+    The <code>with</code> blocks and decorators are just describing the structure
+    of the request.
+  </p>
 
-    <p>
-      What you get in the Langfuse UI is a tree with the same shape as the code:
-      <code>rag-pipeline</code> at the root, with
-      <code>retrieve-documents</code> as a plain span alongside
-      <code>answer</code> and <code>critique</code> as named steps.
-    </p>
+  <p>
+    One request becomes <code>rag-pipeline</code>. Inside it sit retrieval,
+    answer and critique, together with the actual LLM calls that happened inside
+    those steps.
+  </p>
 
-    <p>
-      Each LLM call becomes a generation with its own input, output, latency,
-      token usage, and cost.
-    </p>
+  <p>
+    So when you open the trace, you see something close to the system you
+    actually built.
+  </p>
 
-    <p>
-      The naming is deliberate. Leave the LLM calls to auto-instrumentation
-      alone and they show up under the instrumentor's generic SDK name; the
-      <code>@observe</code> decorator is what makes the tree read like your
-      pipeline instead of like the Anthropic SDK.
-    </p>
+  <p>
+    And this is where tracing becomes useful.
+  </p>
 
+  <p>
+    Go back to the refund-policy example.
+  </p>
 
-    <div class="callout">
-      <strong>The payoff is diagnostic separation.</strong>
+  <p>
+    If retrieval returned the monthly-plan document instead of the annual one,
+    you have a retrieval problem. Changing the system prompt is not going to help.
+  </p>
 
-      <p>
-        If retrieval pulled the monthly-plan page instead of the annual one,
-        you have a retrieval bug. No amount of prompt engineering will fix it.
-      </p>
+  <p>
+    If retrieval returned the correct documents and the model still produced the
+    monthly policy, retrieval did its job. Now you look at the prompt, model or
+    surrounding answer logic.
+  </p>
 
-      <p>
-        If retrieval pulled the right documents and the answer step still got
-        it wrong, the problem is in the prompt or model, and your embeddings are
-        innocent.
-      </p>
+  <p>
+    Same wrong answer.
+  </p>
 
-      <p>
-        Same bad answer. Completely different fix.
-      </p>
-    </div>
+  <p>
+    Very different bug.
+  </p>
 
-    <p>
-      The tree tells you which one you're facing in about thirty seconds instead
-      of an afternoon.
-    </p>
+  <p>
+    That distinction is what the trace gives you.
+  </p>
 
 
-    <h2>What it costs you</h2>
+  <h3>Naming the steps</h3>
 
-    <p>
-      Instrumentation is code, and you own it now.
-    </p>
+  <p>
+    There is one small detail that matters more than I expected.
+  </p>
 
-    <p>
-      Auto-instrumentation lowers that cost. The
-      <code>AnthropicInstrumentor</code> used alongside this pipeline captures
-      every model call automatically, with tokens and latency attached, and
-      that's a good default.
-    </p>
+  <p>
+    If you rely entirely on auto-instrumentation, model calls often appear under
+    generic SDK names.
+  </p>
 
-    <p>
-      But it decides span boundaries for you, and boundaries are where the value
-      lives.
-    </p>
+  <p>
+    That is technically accurate, but not particularly useful when you are
+    trying to understand the application.
+  </p>
 
-    <p>
-      The instrumentor cannot know that <code>retrieve</code> and
-      <code>answer</code> are separate steps in your mental model of the system.
-      Only manual structure can say that.
-    </p>
+  <p>
+    The <code>@observe(name="answer")</code> decorator makes the trace describe
+    <em>your pipeline</em>, rather than the SDK underneath it.
+  </p>
 
-    <p>
-      In practice, the useful combination is:
-    </p>
+  <p>
+    I want to open the trace and see <code>retrieve</code>,
+    <code>answer</code>, <code>critique</code>.
+  </p>
 
-    <blockquote>
-      Auto-instrumentation for the model calls. Hand-written spans for the steps
-      you'll actually debug by.
-    </blockquote>
-
-    <p>
-      Restraint matters too. A trace with forty spans for trivial function calls
-      is as unreadable as a flat log.
-    </p>
-
-    <p>
-      Nest at the level you'd want to see when something breaks, and no deeper.
-    </p>
+  <p>
+    Seeing three generic Anthropic calls tells me much less.
+  </p>
 
 
-    <h2>Why not just raw OpenTelemetry?</h2>
+  <h2>What it costs you</h2>
 
-    <p>
-      Langfuse is built on OpenTelemetry, and you can point generic OTel spans at
-      another backend.
-    </p>
+  <p>
+    Of course, instrumentation adds code.
+  </p>
 
-    <p>
-      What you give up is the LLM-shaped layer on top: generations that natively
-      understand models, tokens, and cost, and a UI that renders a prompt and
-      completion as first-class objects instead of as a flat attribute bag.
-    </p>
+  <p>
+    Auto-instrumentation removes a lot of the boring part. The Anthropic
+    instrumentor can capture the model calls, latency and token usage
+    automatically, which is exactly the kind of thing I would rather not wire
+    manually.
+  </p>
 
-    <p>
-      If you don't need that layer, plain OpenTelemetry is a legitimate choice.
-      If you do, rebuilding it yourself is the expensive path.
-    </p>
+  <p>
+    But it cannot understand the architecture of your application for you.
+  </p>
+
+  <p>
+    It doesn't know that retrieval and answer are separate failure points. It
+    only knows that some functions and API calls happened.
+  </p>
+
+  <p>
+    You still have to define the boundaries that matter.
+  </p>
+
+  <p>
+    The combination I ended up liking is:
+  </p>
+
+  <p>
+    <strong>
+      Auto-instrument the model calls. Add manual spans around the steps you
+      would actually want to debug.
+    </strong>
+  </p>
+
+  <p>
+    There is also such a thing as too much tracing.
+  </p>
+
+  <p>
+    If every small helper function becomes a span, the trace stops helping. You
+    just get a very elaborate tree that you now also have to read.
+  </p>
+
+  <p>
+    I think the right level is fairly practical: if this step failed, would I
+    want to inspect it separately?
+  </p>
+
+  <p>
+    If yes, give it a span.
+  </p>
+
+  <p>
+    If not, probably don't.
+  </p>
 
 
-    <h2>The less optional caveat: data boundaries</h2>
+  <h2>Why not just use OpenTelemetry?</h2>
 
-    <p>
-      Tracing often ships full model inputs and outputs to the observability
-      backend.
-    </p>
+  <p>
+    You can.
+  </p>
 
-    <p>
-      In the refund-policy example, that may mean customer text and internal
-      policy content leaving your application boundary.
-    </p>
+  <p>
+    Langfuse itself uses OpenTelemetry underneath, and generic OTel spans can be
+    sent to plenty of other backends.
+  </p>
 
-    <p>
-      Masking or excluding sensitive fields before they hit the span is
-      therefore a first-class design decision, not a cleanup task for later.
-    </p>
+  <p>
+    What Langfuse adds is an LLM-specific layer.
+  </p>
 
-    <p>
-      It is one of the first questions a security review will ask.
-    </p>
+  <p>
+    A model call is not treated as just another span. It has prompts,
+    completions, model metadata, tokens and cost, and the UI knows how to
+    display those things.
+  </p>
+
+  <p>
+    You could model all of this yourself with raw OpenTelemetry.
+  </p>
+
+  <p>
+    Whether that is worth doing depends on what you need.
+  </p>
+
+  <p>
+    If you mainly want normal distributed tracing, plain OTel may be enough.
+  </p>
+
+  <p>
+    If the thing you are debugging is usually an LLM call, having a backend that
+    already understands LLM calls is convenient.
+  </p>
 
 
-    <h2>Where this leaves you</h2>
+  <h2>The less fun part: data</h2>
 
-    <p>
-      Structure is what turns:
-    </p>
+  <p>
+    Useful traces often contain quite a lot of data.
+  </p>
 
-    <blockquote>
-      “The answer is wrong”
-    </blockquote>
+  <p>
+    Prompts. Model responses. Retrieved documents. User input.
+  </p>
 
-    <p>
-      into:
-    </p>
+  <p>
+    In the refund-policy example that could already mean customer text and
+    internal policy content being sent to the observability backend.
+  </p>
 
-    <blockquote>
-      “The retrieval step is wrong.”
-    </blockquote>
+  <p>
+    In production systems, the data can obviously be much more sensitive.
+  </p>
 
-    <p>
-      That sentence is the difference between guessing and debugging.
-    </p>
+  <p>
+    So what gets captured, masked or excluded needs to be decided when tracing
+    is designed, not after it has already been running for a month.
+  </p>
 
-    <p>
-      It also compounds. The same tree you built for debugging is the structure
-      that evaluations and per-step cost attribution attach to later.
-    </p>
+  <p>
+    The observability system can potentially see the same data your model sees.
+  </p>
 
-    <p>
-      Get the shape right first, and the rest of observability has somewhere to
-      live.
-    </p>
+  <p>
+    That should be treated accordingly.
+  </p>
 
-  </article>
+
+  <h2>Where this leaves us</h2>
+
+  <p>
+    Flat logs are not useless.
+  </p>
+
+  <p>
+    They are great for things like exceptions, failed connections, process state
+    and obvious latency problems.
+  </p>
+
+  <p>
+    They are just not enough to explain a system where the code can execute
+    successfully and the result can still be wrong.
+  </p>
+
+  <p>
+    For that, you need the structure of the execution.
+  </p>
+
+  <p>
+    The useful transition is:
+  </p>
+
+  <blockquote>
+    “The answer is wrong.”
+  </blockquote>
+
+  <p>
+    to:
+  </p>
+
+  <blockquote>
+    “Retrieval returned the wrong document.”
+  </blockquote>
+
+  <p>
+    Now you have somewhere to start.
+  </p>
+
+  <p>
+    And the structure becomes useful beyond debugging.
+  </p>
+
+  <p>
+    The same trace tree is where you can later attach per-step latency, cost,
+    evaluations and production examples that become regression tests.
+  </p>
+
+  <p>
+    But those things only become useful once the underlying trace actually
+    represents the application.
+  </p>
+
+  <p>
+    So I would start there:
+  </p>
+
+  <p>
+    <strong>
+      Make the trace look like the system you are trying to understand.
+    </strong>
+  </p>
+
+</article>
 
 
   <div class="footer-nav">
