@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>If I had to explain AI to a layman — Mideg Dugarova</title>
+
+  <meta
+    name="description"
+    content="An AI explainer that starts with loss functions and builds the mental model before diving into neural networks and transformers."
+  >
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #fafafa;
+      color: #171717;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.7;
+    }
+
+    main {
+      width: min(820px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 70px 0 50px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 36px;
+      color: #555;
+    }
+
+    .eyebrow {
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #666;
+      font-weight: 600;
+    }
+
+    h1 {
+      margin: 14px 0 22px;
+      max-width: 780px;
+      font-size: clamp(2.7rem, 6vw, 5rem);
+      line-height: 1.02;
+      letter-spacing: -0.05em;
+      font-weight: 650;
+    }
+
+    .dek {
+      max-width: 740px;
+      font-size: 1.22rem;
+      color: #444;
+    }
+
+    article {
+      padding: 60px 0 90px;
+    }
+
+    p {
+      margin: 0 0 20px;
+      font-size: 1.03rem;
+    }
+
+    strong {
+      font-weight: 650;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+      background: #f0f0f0;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    .formula {
+      margin: 26px 0;
+      padding: 18px 20px;
+      background: #f1f1f1;
+      border-radius: 8px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 1rem;
+    }
+
+    .footer-nav {
+      padding: 40px 0 70px;
+      border-top: 1px solid #ddd;
+    }
+
+    a {
+      color: inherit;
+      text-underline-offset: 4px;
+    }
+
+    @media (max-width: 650px) {
+      header {
+        padding-top: 45px;
+      }
+
+      article {
+        padding-top: 45px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main>
+
+  <header>
+    <a class="back" href="../index.html">← Back to portfolio</a>
+
+    <p class="eyebrow">AI Education / Technical Translation</p>
+
+    <h1>
+      If I had to explain AI to a layman, I’d start with a Loss Function
+    </h1>
+
+    <p class="dek">
+      Most educational explainers answer the question of how without first
+      giving the reader the mental model to operate in. I answer what and why
+      before diving into how.
+    </p>
+  </header>
+
+  <article>
+
+    <p>
+      If I had to explain AI/ML/Claude and the whole shebang to a layman,
+      let’s say, a German lawyer, I’d start with a Loss Function and what it
+      means to minimize it.
+    </p>
+
+    <p>
+      Usually when non-tech people feel FOMO and want to understand “AI”,
+      they dive straight into neural networks, transformers, watch 3b1b
+      animations etc. and in the end stay confused.
+    </p>
+
+    <p>
+      “Self-attention mechanism by matrix multiplication” means to them as
+      much as “transactions are stored in blocks” when they try to understand
+      blockchain - not much. Because you can’t explain abstract ideas to
+      someone who last dealt with abstractions in high school by giving them
+      more abstractions.
+    </p>
+
+    <p>
+      That’s why we start small.
+    </p>
+
+    <p>
+      <strong>Loss Function.</strong>
+    </p>
+
+    <p>
+      Assume the reader knows what a function is - in simple words, an operator
+      that takes an input and produces an output.
+    </p>
+
+    <p>
+      A Loss Function is a function that measures loss. In ML, loss is a
+      numerical measure of how wrong a model’s prediction was compared with the
+      actual value.
+    </p>
+
+    <p>
+      A Loss Function is not one defined function like a square root. There are
+      various loss functions for different classes of ML problems.
+    </p>
+
+    <p>
+      One of the most well-known ones is MSE - mean squared error. You have
+      probably seen something very similar in a basic statistics class. It is
+      the average of the squared differences between the actual value and the
+      value predicted by the model.
+    </p>
+
+    <p>
+      It is one of the standard loss functions used for regression.
+    </p>
+
+    <p>
+      Yes, regression is also a machine learning problem.
+    </p>
+
+    <p>
+      The task of machine learning is to find a model that makes this loss as
+      small as possible.
+    </p>
+
+    <p>
+      Let’s take a stupidly simple example.
+    </p>
+
+    <p>
+      We want to predict apartment prices. We have historical data with the
+      size of an apartment and the price it actually sold for, and we build a
+      model that tries to predict the price from the size.
+    </p>
+
+    <p>
+      For three apartments, reality looks like this:
+    </p>
+
+    <p>
+      Actual prices: €500k, €700k, €900k.
+    </p>
+
+    <p>
+      Our model predicts: €550k, €650k, €800k.
+    </p>
+
+    <p>
+      So the errors are €50k, -€50k and -€100k.
+    </p>
+
+    <p>
+      Here is why MSE is a good loss measure for this case: If we simply
+      averaged these errors, positive and negative errors could cancel each
+      other out and make a terrible model look good. Squaring avoids this.
+    </p>
+
+    <p>
+      If we measure the prices in 1k EUR, we get:
+    </p>
+
+    <div class="formula">
+      (50² + 50² + 100²) / 3 = 5000
+    </div>
+
+    <p>
+      We have taken three predictions and reduced “how wrong was the model?”
+      to one number.
+    </p>
+
+    <p>
+      Now imagine another model predicts €510k, €690k and €880k.
+    </p>
+
+    <p>
+      The errors are 10, -10 and -20.
+    </p>
+
+    <p>
+      Its MSE is:
+    </p>
+
+    <div class="formula">
+      (10² + 10² + 20²) / 3 = 200
+    </div>
+
+    <p>
+      A lot smaller loss.
+    </p>
+
+    <p>
+      So if we have to choose between these two models based on this loss
+      function, the second model is doing better.
+    </p>
+
+    <p>
+      This is what “minimizing the loss” means.
+    </p>
+
+    <p>
+      We want the model to make predictions for which the value returned by
+      the loss function is as small as possible.
+    </p>
+
+    <p>
+      There is one detail here that I think gets skipped too often in beginner
+      explanations: the loss function is not some universal mathematical
+      definition of being wrong.
+    </p>
+
+    <p>
+      We choose it.
+    </p>
+
+    <p>
+      A classification model, for example, will usually use a different loss
+      function, such as cross-entropy.
+    </p>
+
+    <p>
+      Accuracy, precision, recall etc. are related, but they are evaluation
+      metrics rather than loss functions. We’ll get to that distinction later.
+    </p>
+
+    <p>
+      This is why there are many loss functions.
+    </p>
+
+    <p>
+      Before there is a neural network, transformer, Claude, GPU or anything
+      else people normally associate with AI, there is a much more basic
+      question:
+    </p>
+
+    <p>
+      <strong>What are we asking the model to get better at?</strong>
+    </p>
+
+    <p>
+      Mathematically, it is minimizing the loss function.
+    </p>
+
+    <p>
+      It takes the model’s prediction and the actual answer and gives us a
+      number representing how bad that prediction was according to the rule
+      we chose.
+    </p>
+
+    <p>
+      High loss - bad, lower loss - better.
+    </p>
+
+    <p>
+      Training a machine learning model means trying to make that number smaller.
+    </p>
+
+    <p>
+      That’s enough about loss functions for now.
+    </p>
+
+  </article>
+
+  <div class="footer-nav">
+    <a href="../index.html">← Back to portfolio</a>
+  </div>
+
+</main>
+
+</body>
+</html>
